@@ -1,0 +1,29 @@
+{
+  "name": "Neon Fruit Frenzy",
+  "version": "1.2.0",
+  "category": "Arcade",
+  "orientation": "any",
+  "aspectRatio": "responsive",
+  "supportedResolutions": [
+    { "aspect": "9:16", "width": 1080, "height": 1920, "description": "Mobile Portrait / Shorts Playables" },
+    { "aspect": "16:9", "width": 1920, "height": 1080, "description": "Desktop / Living Room Playables" }
+  ],
+  "requirements": {
+    "offlineCapable": true,
+    "safeAreaInsetSupport": true,
+    "touchInteraction": true,
+    "mouseInteraction": true,
+    "keyboardNavigation": true,
+    "audioLifecycleHandling": true,
+    "monetizationIncluded": false,
+    "externalDependencies": false
+  },
+  "sdkHooks": {
+    "firstFrameReady": "YouTubePlayables.reportFirstFrame()",
+    "gameReady": "YouTubePlayables.reportGameReady()",
+    "sendScore": "YouTubePlayables.sendScore(score)",
+    "onPause": "YouTubePlayables.init() -> ytgame.system.onPause",
+    "onResume": "YouTubePlayables.init() -> ytgame.system.onResume",
+    "onAudioStateChange": "YouTubePlayables.init() -> ytgame.system.onAudioStateChange"
+  }
+}

@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <!-- Background Gradients -->
+    <radialGradient id="bgGlow" cx="50%" cy="45%" r="70%">
+      <stop offset="0%" stop-color="#18182c"/>
+      <stop offset="55%" stop-color="#0c0c16"/>
+      <stop offset="100%" stop-color="#05050a"/>
+    </radialGradient>
+
+    <!-- Neon Glow Filters -->
+    <filter id="neonPink" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur1"/>
+      <feGaussianBlur stdDeviation="20" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="neonCyan" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur1"/>
+      <feGaussianBlur stdDeviation="25" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="neonGold" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur1"/>
+      <feGaussianBlur stdDeviation="28" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Linear Gradients -->
+    <linearGradient id="heroTextGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#e0e0ea"/>
+      <stop offset="100%" stop-color="#8e8e9f"/>
+    </linearGradient>
+
+    <linearGradient id="bladeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#00e5ff"/>
+      <stop offset="100%" stop-color="#ff007f"/>
+    </linearGradient>
+
+    <linearGradient id="appleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff375f"/>
+      <stop offset="100%" stop-color="#ff2d55"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Deep Apple Space Void -->
+  <rect width="1200" height="630" fill="url(#bgGlow)"/>
+
+  <!-- Ambient Light Orbs -->
+  <circle cx="250" cy="180" r="140" fill="#ff007f" opacity="0.12" filter="blur(60px)"/>
+  <circle cx="950" cy="450" r="160" fill="#00e5ff" opacity="0.1" filter="blur(70px)"/>
+
+  <!-- Neon Blade Ribbon Gesture Trail -->
+  <path d="M 180 500 Q 420 180 650 320 T 1020 120" fill="none" stroke="url(#bladeGrad)" stroke-width="12" stroke-linecap="round" filter="url(#neonCyan)"/>
+  <path d="M 180 500 Q 420 180 650 320 T 1020 120" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Floating Glowing Fruits -->
+  <!-- 1. Apple (Sliced cleanly in two with juice) -->
+  <g transform="translate(620, 290)">
+    <!-- Juice drops -->
+    <circle cx="20" cy="-40" r="5" fill="#ff2d55" filter="url(#neonPink)"/>
+    <circle cx="45" cy="-25" r="7" fill="#ff375f" filter="url(#neonPink)"/>
+    <circle cx="-35" cy="45" r="6" fill="#ff2d55" filter="url(#neonPink)"/>
+    <circle cx="-50" cy="20" r="4" fill="#ff375f"/>
+
+    <!-- Half 1 -->
+    <path d="M -30 -30 Q -60 10 -20 40 Q 20 60 40 30 Z" fill="url(#appleGrad)" filter="url(#neonPink)"/>
+    <!-- Half 2 -->
+    <path d="M 20 -40 Q 60 -10 40 20 Q 0 40 -10 10 Z" fill="url(#appleGrad)" filter="url(#neonPink)"/>
+  </g>
+
+  <!-- 2. Supernova Starfruit -->
+  <g transform="translate(240, 220)">
+    <polygon points="0,-45 13,-14 45,-14 19,7 29,38 0,19 -29,38 -19,7 -45,-14 -13,-14" fill="#ffd60a" filter="url(#neonGold)"/>
+    <polygon points="0,-45 13,-14 45,-14 19,7 29,38 0,19 -29,38 -19,7 -45,-14 -13,-14" fill="#ffffff" opacity="0.6"/>
+  </g>
+
+  <!-- 3. Chrono Freeze Berry -->
+  <g transform="translate(960, 360)">
+    <polygon points="0,-40 35,-20 35,20 0,40 -35,20 -35,-20" fill="#00e5ff" filter="url(#neonCyan)"/>
+    <line x1="0" y1="-30" x2="0" y2="30" stroke="#ffffff" stroke-width="3"/>
+    <line x1="-26" y1="-15" x2="26" y2="15" stroke="#ffffff" stroke-width="3"/>
+    <line x1="-26" y1="15" x2="26" y2="-15" stroke="#ffffff" stroke-width="3"/>
+  </g>
+
+  <!-- Apple Frosted Dynamic Island Glass HUD Pill -->
+  <g transform="translate(420, 48)">
+    <rect width="360" height="52" rx="26" fill="rgba(24, 24, 34, 0.75)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.2"/>
+    <text x="50" y="32" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="13" font-weight="600" fill="#86868b" letter-spacing="1">SCORE</text>
+    <text x="110" y="34" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="20" font-weight="700" fill="#ffffff">2,480</text>
+    <line x1="180" y1="14" x2="180" y2="38" stroke="rgba(255, 255, 255, 0.15)"/>
+    <rect x="200" y="12" width="130" height="28" rx="14" fill="rgba(255, 180, 0, 0.15)" stroke="rgba(255, 200, 0, 0.4)"/>
+    <text x="265" y="31" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="13" font-weight="700" fill="#ffd60a">COMBO x8 🔥</text>
+  </g>
+
+  <!-- Typography & Hero Brand Framing -->
+  <!-- Top Category Capsule -->
+  <g transform="translate(600, 440)">
+    <rect x="-180" y="-18" width="360" height="36" rx="18" fill="rgba(0, 113, 227, 0.16)" stroke="rgba(41, 151, 255, 0.4)" stroke-width="1"/>
+    <text x="0" y="5" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="13" font-weight="600" fill="#2997ff" letter-spacing="1.2">APPLE DESIGN • FLUID MOTION EDITION</text>
+  </g>
+
+  <!-- Big Hero Title -->
+  <text x="600" y="515" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="64" font-weight="800" fill="url(#heroTextGrad)" letter-spacing="-1.8">Neon Fruit Frenzy</text>
+
+  <!-- Subtitle Tagline -->
+  <text x="600" y="560" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="19" font-weight="400" fill="#86868b" letter-spacing="-0.3">Ultra-Crisp 8K Vector Dynamics • Web Audio Synthesis • YouTube Playables Certified</text>
+</svg>
