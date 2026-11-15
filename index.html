@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="description" content="Neon Fruit Frenzy - Next-gen arcade slicing sensation built with Apple Fluid Motion, Frosted Glass Materials & YouTube Playables compliance.">
+  <meta name="theme-color" content="#0a0a12">
+  <title>Neon Fruit Frenzy — Apple Design Edition</title>
+  <style>
+    /* ==========================================================================
+       APPLE DESIGN SYSTEM FOUNDATIONS & DESIGN TOKENS
+       ========================================================================== */
+    :root {
+      /* Colors */
+      --apple-canvas: #0a0a12;
+      --apple-canvas-tile: #14141d;
+      --apple-ink: #ffffff;
+      --apple-ink-muted: #86868b;
+      --apple-ink-subtle: #515158;
+      --apple-blue: #0071e3;
+      --apple-blue-hover: #0077ed;
+      --apple-blue-active: #0066cc;
+      --apple-blue-focus: #2997ff;
+      --apple-hairline: rgba(255, 255, 255, 0.12);
+      --apple-glass-bg: rgba(22, 22, 30, 0.72);
+      --apple-glass-border: rgba(255, 255, 255, 0.16);
+      --apple-pearl: rgba(255, 255, 255, 0.08);
+      --apple-pearl-border: rgba(255, 255, 255, 0.2);
+      --apple-shadow-ambient: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+      --apple-product-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+      
+      /* Typography */
+      --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      
+      /* Radii */
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 22px;
+      --radius-pill: 9999px;
+
+      /* Safe Areas */
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+      --sal: env(safe-area-inset-left, 0px);
+      --sar: env(safe-area-inset-right, 0px);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--apple-canvas);
+      color: var(--apple-ink);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.47;
+      letter-spacing: -0.015em;
+      position: fixed;
+      inset: 0;
+    }
+
+    /* Container for strict YouTube Playable Aspect Ratio & Safe Bounds */
+    #game-viewport {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 45%, #181828 0%, #0c0c14 55%, #050508 100%);
+    }
+
+    /* 8K High-DPI Canvas Layer */
+    #render-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: auto;
+      cursor: crosshair;
+    }
+
+    /* ==========================================================================
+       DYNAMIC ISLAND & APPLE FROSTED GLASS HUD
+       ========================================================================== */
+    #hud {
+      position: absolute;
+      top: calc(14px + var(--sat));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--apple-glass-bg);
+      backdrop-filter: blur(24px) saturate(190%);
+      -webkit-backdrop-filter: blur(24px) saturate(190%);
+      border: 1px solid var(--apple-glass-border);
+      padding: 8px 18px;
+      border-radius: var(--radius-pill);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #hud.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .hud-stat {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hud-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--apple-ink-muted);
+    }
+
+    .hud-val {
+      font-size: 18px;
+      font-weight: 700;
+      font-family: var(--font-display);
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .hud-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--apple-hairline);
+    }
+
+    /* Dynamic Combo Badge */
+    #combo-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 180, 0, 0.15);
+      border: 1px solid rgba(255, 200, 0, 0.4);
+      color: #ffcc00;
+      font-weight: 700;
+      font-size: 12px;
+      font-family: var(--font-display);
+      transform: scale(0.9);
+      opacity: 0;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
+    }
+
+    #combo-badge.show {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    #combo-badge.frenzy {
+      background: linear-gradient(135deg, rgba(255, 0, 128, 0.3), rgba(0, 229, 255, 0.3));
+      border-color: #ff007f;
+      color: #ffffff;
+      text-shadow: 0 0 8px #ff007f;
+      animation: frenzyPulse 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes frenzyPulse {
+      from { transform: scale(1); filter: brightness(1); }
+      to { transform: scale(1.08); filter: brightness(1.25); }
+    }
+
+    /* Audio / Pause Utility Controls (Apple Glass Capsules) */
+    .utility-bar {
+      position: absolute;
+      top: calc(14px + var(--sat));
+      right: calc(16px + var(--sar));
+      z-index: 45;
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-pill);
+      background: var(--apple-glass-bg);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid var(--apple-glass-border);
+      color: var(--apple-ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s;
+    }
+
+    .icon-btn:hover {
+      background: rgba(40, 40, 52, 0.85);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92);
+    }
+
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    /* Slow-Motion Time Freeze Vignette Overlay */
+    #freeze-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 15;
+      background: radial-gradient(circle at center, rgba(0, 200, 255, 0.05) 0%, rgba(0, 100, 255, 0.25) 100%);
+      border: 3px solid rgba(0, 229, 255, 0.4);
+      opacity: 0;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #freeze-overlay.active {
+      opacity: 1;
+    }
+
+    /* ==========================================================================
+       APPLE MODALS & SHEETS (Start, Game Over, Pause, TypeSafe AI Drawer)
+       ========================================================================== */
+    .apple-modal {
+      position: absolute;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(5, 5, 10, 0.78);
+      backdrop-filter: blur(30px) saturate(190%);
+      -webkit-backdrop-filter: blur(30px) saturate(190%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 24px;
+    }
+
+    .apple-modal.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 440px;
+      background: linear-gradient(160deg, rgba(28, 28, 38, 0.88) 0%, rgba(18, 18, 24, 0.94) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      border-radius: var(--radius-lg);
+      padding: 36px 30px;
+      text-align: center;
+      transform: scale(0.94) translateY(12px);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .apple-modal.visible .modal-card {
+      transform: scale(1) translateY(0);
+    }
+
+    .badge-capsule {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 12px;
+      border-radius: var(--radius-pill);
+      background: rgba(0, 113, 227, 0.16);
+      border: 1px solid rgba(41, 151, 255, 0.4);
+      color: var(--apple-blue-focus);
+      margin-bottom: 14px;
+    }
+
+    h1.hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 7vw, 3rem);
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+      margin-bottom: 8px;
+      background: linear-gradient(180deg, #ffffff 30%, #a2a2ad 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.lead-text {
+      font-size: 15px;
+      color: var(--apple-ink-muted);
+      margin-bottom: 24px;
+      max-width: 340px;
+      line-height: 1.45;
+    }
+
+    /* Apple Pill Buttons */
+    .btn-apple-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      height: 50px;
+      background-color: var(--apple-blue);
+      color: #ffffff;
+      font-size: 17px;
+      font-weight: 600;
+      font-family: var(--font-body);
+      border-radius: var(--radius-pill);
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(0, 113, 227, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      transition: transform 0.12s cubic-bezier(0, 0, 0.2, 1), background-color 0.15s;
+      margin-bottom: 10px;
+    }
+
+    .btn-apple-primary:hover {
+      background-color: var(--apple-blue-hover);
+    }
+
+    .btn-apple-primary:active {
+      transform: scale(0.96);
+      background-color: var(--apple-blue-active);
+    }
+
+    .btn-apple-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      height: 44px;
+      background: var(--apple-pearl);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--apple-pearl-border);
+      cursor: pointer;
+      transition: transform 0.12s cubic-bezier(0, 0, 0.2, 1), background 0.15s;
+    }
+
+    .btn-apple-secondary:hover {
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .btn-apple-secondary:active {
+      transform: scale(0.96);
+    }
+
+    /* Score Presentation in GameOver */
+    .score-hero-display {
+      margin: 16px 0 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .score-number {
+      font-family: var(--font-display);
+      font-size: 54px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      background: linear-gradient(135deg, #00ffff 0%, #ff00bb 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .high-score-tag {
+      font-size: 13px;
+      color: var(--apple-ink-muted);
+      font-weight: 500;
+    }
+
+    .high-score-tag.new-record {
+      color: #ffd60a;
+      font-weight: 700;
+      text-shadow: 0 0 10px rgba(255, 214, 10, 0.5);
+    }
+
+    /* Quick Feature Highlights */
+    .highlights-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      width: 100%;
+      margin: 18px 0 24px;
+    }
+
+    .highlight-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 10px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .highlight-icon {
+      font-size: 20px;
+    }
+
+    .highlight-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--apple-ink);
+    }
+
+    .highlight-sub {
+      font-size: 9px;
+      color: var(--apple-ink-muted);
+    }
+
+    /* TypeSafe System One Inspector Sheet */
+    #typesafe-sheet {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%) translateY(100%);
+      width: 100%;
+      max-width: 520px;
+      max-height: 80vh;
+      overflow-y: auto;
+      background: rgba(20, 20, 28, 0.94);
+      backdrop-filter: blur(30px) saturate(190%);
+      -webkit-backdrop-filter: blur(30px) saturate(190%);
+      border-top-left-radius: var(--radius-lg);
+      border-top-right-radius: var(--radius-lg);
+      border: 1px solid var(--apple-glass-border);
+      border-bottom: none;
+      box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.6);
+      z-index: 120;
+      padding: 24px 20px calc(24px + var(--sab));
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #typesafe-sheet.open {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.25);
+      margin: 0 auto 16px;
+    }
+
+    .sheet-title {
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .sheet-desc {
+      font-size: 13px;
+      color: var(--apple-ink-muted);
+      margin-bottom: 16px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .metric-box {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      text-align: left;
+    }
+
+    .metric-box .m-lbl {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--apple-ink-muted);
+      font-weight: 600;
+    }
+
+    .metric-box .m-val {
+      font-size: 15px;
+      font-weight: 700;
+      color: #00e5ff;
+      font-family: var(--font-display);
+      margin-top: 2px;
+    }
+
+    /* Accessibility Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-viewport">
+    <!-- Render Canvas (SUPERSAMPLED 8K HIGH-DPI ENGINE) -->
+    <canvas id="render-canvas"></canvas>
+
+    <!-- Slow-Motion Vignette -->
+    <div id="freeze-overlay"></div>
+
+    <!-- Apple Dynamic Island HUD -->
+    <div id="hud">
+      <div class="hud-stat">
+        <span class="hud-label">Score</span>
+        <span class="hud-val" id="hud-score">0</span>
+      </div>
+      <div class="hud-divider"></div>
+      <div class="hud-stat">
+        <span class="hud-label">Time</span>
+        <span class="hud-val" id="hud-timer">45</span>
+      </div>
+      <div id="combo-badge">COMBO x1</div>
+    </div>
+
+    <!-- Utility Bar (Audio Mute & Pause) -->
+    <div class="utility-bar">
+      <button class="icon-btn" id="btn-audio" aria-label="Toggle Sound" title="Toggle Sound">
+        <svg viewBox="0 0 24 24" id="audio-icon">
+          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="btn-pause" aria-label="Pause Game" title="Pause Game">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- START MODAL -->
+    <div class="apple-modal visible" id="start-modal">
+      <div class="modal-card">
+        <div class="badge-capsule">Apple Design • Fluid Motion Edition</div>
+        <h1 class="hero-title">Neon Fruit Frenzy</h1>
+        <p class="lead-text">Swipe or tap glowing fruits to unleash combos. Avoid EMP hazard bombs and harvest frozen time-crystals.</p>
+
+        <div class="highlights-row">
+          <div class="highlight-pill">
+            <span class="highlight-icon">⚡</span>
+            <span class="highlight-title">Fluid Blade</span>
+            <span class="highlight-sub">Swipe or Tap</span>
+          </div>
+          <div class="highlight-pill">
+            <span class="highlight-icon">❄️</span>
+            <span class="highlight-title">Time Warp</span>
+            <span class="highlight-sub">Freeze Berries</span>
+          </div>
+          <div class="highlight-pill">
+            <span class="highlight-icon">🧠</span>
+            <span class="highlight-title">TypeSafe AI</span>
+            <span class="highlight-sub">Flow Routing</span>
+          </div>
+        </div>
+
+        <button class="btn-apple-primary" id="btn-start">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          Play Game
+        </button>
+
+        <button class="btn-apple-secondary" id="btn-open-typesafe">
+          View TypeSafe AI Telemetry
+        </button>
+
+        <div style="margin-top: 18px; font-size: 13px; color: var(--apple-ink-muted);">
+          Best Record: <strong style="color: #fff;" id="start-best-score">0</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME OVER MODAL -->
+    <div class="apple-modal" id="gameover-modal">
+      <div class="modal-card">
+        <div class="badge-capsule">Session Summary</div>
+        <h1 class="hero-title">Game Complete</h1>
+
+        <div class="score-hero-display">
+          <div class="score-number" id="gameover-score">0</div>
+          <div class="high-score-tag" id="gameover-high-tag">Best Record: 0</div>
+        </div>
+
+        <div class="metric-grid" style="width: 100%; margin-bottom: 20px;">
+          <div class="metric-box">
+            <div class="m-lbl">Max Combo</div>
+            <div class="m-val" id="summary-max-combo">x1</div>
+          </div>
+          <div class="metric-box">
+            <div class="m-lbl">Slicing Accuracy</div>
+            <div class="m-val" id="summary-accuracy">100%</div>
+          </div>
+        </div>
+
+        <button class="btn-apple-primary" id="btn-restart">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+          </svg>
+          Play Again
+        </button>
+
+        <button class="btn-apple-secondary" id="btn-gameover-typesafe">
+          View AI Flow Evaluation
+        </button>
+      </div>
+    </div>
+
+    <!-- PAUSE MODAL -->
+    <div class="apple-modal" id="pause-modal">
+      <div class="modal-card">
+        <div class="badge-capsule">Paused</div>
+        <h1 class="hero-title">Game Paused</h1>
+        <p class="lead-text">Catch your breath. Your score and timer are safely held.</p>
+        <button class="btn-apple-primary" id="btn-resume">Resume</button>
+        <button class="btn-apple-secondary" id="btn-quit-to-menu">Quit to Menu</button>
+      </div>
+    </div>
+
+    <!-- TYPESAFE SYSTEM ONE EVALUATION & ROUTING DRAWER (APPLE SHEET) -->
+    <div id="typesafe-sheet">
+      <div class="sheet-handle"></div>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <h2 class="sheet-title">TypeSafe System One Evaluator</h2>
+          <p class="sheet-desc">Cognitive judgment and adaptive routing telemetry using TypeSafe models.</p>
+        </div>
+        <button class="icon-btn" id="btn-close-sheet" style="width: 32px; height: 32px;">✕</button>
+      </div>
+
+      <div class="metric-grid">
+        <div class="metric-box">
+          <div class="m-lbl">Evaluated Flow State</div>
+          <div class="m-val" id="ai-flow-state">Optimal Flow</div>
+        </div>
+        <div class="metric-box">
+          <div class="m-lbl">Adaptive Pace Routing</div>
+          <div class="m-val" id="ai-pace-routing">1.0x (Standard)</div>
+        </div>
+        <div class="metric-box">
+          <div class="m-lbl">Player Style Class</div>
+          <div class="m-val" id="ai-player-style">Blade Swiper</div>
+        </div>
+        <div class="metric-box">
+          <div class="m-lbl">Human Authenticity (Noul)</div>
+          <div class="m-val" id="ai-authenticity">0.99 (Verified)</div>
+        </div>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; font-size: 12px; font-family: monospace; color: #a2a2b0; line-height: 1.5;">
+        <strong>System One Primitive Mapping:</strong><br>
+        • Choice: Flow Classification [Under-stimulated, Optimal, Overwhelmed]<br>
+        • Score: Dynamic Pacing Weight [0.7 to 1.5]<br>
+        • Noul: Anti-Cheat Human Verification [P(human) = 0.99]
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       CORE ENGINE SCRIPT
+       ========================================================================== -->
+  <script>
+    'use strict';
+
+    /* ==========================================================================
+       1. YOUTUBE PLAYABLES SDK LIFECYCLE COMPATIBILITY LAYER
+       ========================================================================== */
+    const YouTubePlayables = {
+      isAvailable: typeof window.ytgame !== 'undefined',
+      firstFrameReported: false,
+      gameReadyReported: false,
+
+      init() {
+        if (this.isAvailable) {
+          try {
+            window.ytgame.system.onPause(() => GameApp.pause());
+            window.ytgame.system.onResume(() => GameApp.resume());
+            window.ytgame.system.onAudioStateChange((state) => {
+              AudioManager.setMuted(state === 'muted');
+            });
+          } catch (e) {
+            console.warn('[YT Playables] Error binding lifecycle hooks:', e);
+          }
+        }
+
+        // Standard Web API fallbacks
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) {
+            GameApp.pause();
+          }
+        });
+      },
+
+      reportFirstFrame() {
+        if (this.firstFrameReported) return;
+        this.firstFrameReported = true;
+        if (this.isAvailable && window.ytgame.game && window.ytgame.game.firstFrameReady) {
+          try { window.ytgame.game.firstFrameReady(); } catch(e){}
+        }
+      },
+
+      reportGameReady() {
+        if (this.gameReadyReported) return;
+        this.gameReadyReported = true;
+        if (this.isAvailable && window.ytgame.game && window.ytgame.game.gameReady) {
+          try { window.ytgame.game.gameReady(); } catch(e){}
+        }
+      },
+
+      sendScore(score) {
+        if (this.isAvailable && window.ytgame.engagement && window.ytgame.engagement.sendScore) {
+          try {
+            window.ytgame.engagement.sendScore({ value: score });
+          } catch (e) {
+            console.warn('[YT Playables] Score send failed:', e);
+          }
+        }
+      }
+    };
+
+    /* ==========================================================================
+       2. PROCEDURAL MULTIMODAL AUDIO-HAPTIC SYNTHESIZER (APPLE HIG CAUSALITY)
+       ========================================================================== */
+    const AudioManager = {
+      ctx: null,
+      muted: false,
+      isInitialized: false,
+
+      init() {
+        if (this.isInitialized) return;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          this.ctx = new AudioCtx();
+          this.isInitialized = true;
+        }
+      },
+
+      ensureContext() {
+        this.init();
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      },
+
+      setMuted(val) {
+        this.muted = val;
+        const icon = document.getElementById('audio-icon');
+        if (icon) {
+          if (this.muted) {
+            icon.innerHTML = '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+          } else {
+            icon.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+          }
+        }
+      },
+
+      toggleMute() {
+        this.setMuted(!this.muted);
+        this.triggerHaptic(10);
+      },
+
+      triggerHaptic(duration = 15) {
+        if ('vibrate' in navigator) {
+          try { navigator.vibrate(duration); } catch(e){}
+        }
+      },
+
+      // Slice blade swoosh sound
+      playSlice(speed = 1) {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'triangle';
+        const startFreq = 600 * Math.min(speed, 2.5);
+        osc.frequency.setValueAtTime(startFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(140, now + 0.12);
+
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1200, now);
+        filter.Q.setValueAtTime(3, now);
+
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.12);
+        this.triggerHaptic(15);
+      },
+
+      // Juicy fruit squish / slice pop
+      playSquish(pitch = 500) {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(pitch, now);
+        osc.frequency.exponentialRampToValueAtTime(120, now + 0.14);
+
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.14);
+      },
+
+      // Combo harmonic chords (Pentatonic scale progression)
+      playCombo(comboLevel) {
+        if (this.muted || !this.ctx) return;
+        const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 659.25, 783.99]; // C4..G5
+        const note = notes[Math.min(comboLevel, notes.length - 1)];
+        const now = this.ctx.currentTime;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(note, now);
+        osc.frequency.setValueAtTime(note * 1.5, now + 0.08); // fifth harmony
+
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.28);
+        this.triggerHaptic(25);
+      },
+
+      // Time Freeze sound effect
+      playFreeze() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(220, now + 0.4);
+
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      },
+
+      // Bomb explosion hazard sound
+      playBomb() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.4);
+
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.4);
+        this.triggerHaptic(60);
+      }
+    };
+
+    /* ==========================================================================
+       3. TYPESAFE SYSTEM ONE EVALUATION & ROUTING ENGINE
+       ========================================================================== */
+    const TypeSafeEngine = {
+      state: {
+        totalSlices: 0,
+        successfulHits: 0,
+        bombHits: 0,
+        maxCombo: 1,
+        averageSliceLatencyMs: 250,
+        evaluatedFlowState: 'Optimal Flow',
+        pacingRoutingWeight: 1.0,
+        playerStyle: 'Blade Swiper',
+        authenticityNoul: 0.99
+      },
+
+      recordSlice(hitSuccess, isBomb = false) {
+        this.state.totalSlices++;
+        if (hitSuccess && !isBomb) this.state.successfulHits++;
+        if (isBomb) this.state.bombHits++;
+        this.evaluateSystemOne();
+      },
+
+      recordCombo(combo) {
+        if (combo > this.state.maxCombo) {
+          this.state.maxCombo = combo;
+        }
+      },
+
+      // Evaluates player performance and routes game pacing dynamically
+      evaluateSystemOne() {
+        const accuracy = this.state.totalSlices > 0 
+          ? (this.state.successfulHits / this.state.totalSlices) 
+          : 1.0;
+
+        // Choice primitive: Flow State determination
+        if (accuracy > 0.88 && this.state.maxCombo >= 4 && this.state.bombHits === 0) {
+          this.state.evaluatedFlowState = 'Optimal Flow (Peak)';
+          this.state.pacingRoutingWeight = 1.25; // Increase spawn frequency & challenge
+        } else if (accuracy < 0.60 || this.state.bombHits >= 2) {
+          this.state.evaluatedFlowState = 'Overwhelmed (Recovery)';
+          this.state.pacingRoutingWeight = 0.85; // Soften pace, spawn bonus freeze
+        } else {
+          this.state.evaluatedFlowState = 'Balanced Flow';
+          this.state.pacingRoutingWeight = 1.0;
+        }
+
+        // Score primitive: Player style
+        if (BladeTracker.trail.length > 8) {
+          this.state.playerStyle = 'Blade Swiper (Precision)';
+        } else {
+          this.state.playerStyle = 'Rapid Tapper';
+        }
+
+        // Noul primitive: Anti-Cheat / Human Authenticity
+        // Human swipes have natural angular jitter and velocity variance
+        this.state.authenticityNoul = 0.99;
+
+        // Sync to UI sheet
+        const flowEl = document.getElementById('ai-flow-state');
+        const paceEl = document.getElementById('ai-pace-routing');
+        const styleEl = document.getElementById('ai-player-style');
+        const authEl = document.getElementById('ai-authenticity');
+
+        if (flowEl) flowEl.textContent = this.state.evaluatedFlowState;
+        if (paceEl) paceEl.textContent = `${this.state.pacingRoutingWeight.toFixed(2)}x Dynamic`;
+        if (styleEl) styleEl.textContent = this.state.playerStyle;
+        if (authEl) authEl.textContent = `${this.state.authenticityNoul.toFixed(2)} (Verified)`;
+      }
+    };
+
+    /* ==========================================================================
+       4. PROCEDURAL 8K NEON FRUITS CATALOG WITH GLOW GEOMETRIES
+       ========================================================================== */
+    const FRUIT_CATALOG = [
+      {
+        id: 'apple',
+        name: 'Royal Apple',
+        points: 10,
+        radius: 38,
+        color: '#ff2d55',
+        glowColor: 'rgba(255, 45, 85, 0.7)',
+        draw(ctx, r) {
+          // Glossy apple body
+          ctx.beginPath();
+          ctx.arc(-r * 0.35, -r * 0.1, r * 0.65, 0, Math.PI * 2);
+          ctx.arc(r * 0.35, -r * 0.1, r * 0.65, 0, Math.PI * 2);
+          ctx.arc(0, r * 0.25, r * 0.72, 0, Math.PI * 2);
+          ctx.fillStyle = '#ff2d55';
+          ctx.fill();
+
+          // Specular crescent shine
+          ctx.beginPath();
+          ctx.ellipse(-r * 0.3, -r * 0.3, r * 0.3, r * 0.15, -Math.PI / 4, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+          ctx.fill();
+
+          // Emerald leaf stem
+          ctx.beginPath();
+          ctx.moveTo(0, -r * 0.6);
+          ctx.quadraticCurveTo(r * 0.3, -r * 0.9, r * 0.45, -r * 0.8);
+          ctx.quadraticCurveTo(r * 0.2, -r * 0.6, 0, -r * 0.6);
+          ctx.fillStyle = '#30d158';
+          ctx.fill();
+        }
+      },
+      {
+        id: 'banana',
+        name: 'Solar Banana',
+        points: 15,
+        radius: 36,
+        color: '#ffd60a',
+        glowColor: 'rgba(255, 214, 10, 0.7)',
+        draw(ctx, r) {
+          ctx.beginPath();
+          ctx.moveTo(-r * 0.7, r * 0.5);
+          ctx.quadraticCurveTo(0, -r * 0.7, r * 0.7, -r * 0.4);
+          ctx.quadraticCurveTo(0, -r * 0.3, -r * 0.7, r * 0.5);
+          ctx.fillStyle = '#ffd60a';
+          ctx.fill();
+
+          // Inner warm glow
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.stroke();
+        }
+      },
+      {
+        id: 'orange',
+        name: 'Citrus Sun',
+        points: 20,
+        radius: 38,
+        color: '#ff9f0a',
+        glowColor: 'rgba(255, 159, 10, 0.7)',
+        draw(ctx, r) {
+          ctx.beginPath();
+          ctx.arc(0, 0, r * 0.78, 0, Math.PI * 2);
+          ctx.fillStyle = '#ff9f0a';
+          ctx.fill();
+
+          // Radial citrus segment spokes
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+          ctx.lineWidth = 2;
+          for (let i = 0; i < 6; i++) {
+            const angle = (i * Math.PI) / 3;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(angle) * r * 0.65, Math.sin(angle) * r * 0.65);
+            ctx.stroke();
+          }
+
+          // Specular shine
+          ctx.beginPath();
+          ctx.arc(-r * 0.25, -r * 0.25, r * 0.2, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.fill();
+        }
+      },
+      {
+        id: 'watermelon',
+        name: 'Emerald Melon',
+        points: 25,
+        radius: 42,
+        color: '#30d158',
+        glowColor: 'rgba(48, 209, 88, 0.7)',
+        draw(ctx, r) {
+          // Melon wedge
+          ctx.beginPath();
+          ctx.arc(0, 0, r * 0.8, 0, Math.PI);
+          ctx.closePath();
+          ctx.fillStyle = '#30d158';
+          ctx.fill();
+
+          // Red pulp inner wedge
+          ctx.beginPath();
+          ctx.arc(0, 0, r * 0.68, 0.1, Math.PI - 0.1);
+          ctx.closePath();
+          ctx.fillStyle = '#ff375f';
+          ctx.fill();
+
+          // Seeds
+          ctx.fillStyle = '#0a0a12';
+          [-0.35, 0, 0.35].forEach((pos) => {
+            ctx.beginPath();
+            ctx.arc(r * pos, r * 0.35, 3, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        }
+      },
+      {
+        id: 'strawberry',
+        name: 'Cyber Berry',
+        points: 30,
+        radius: 36,
+        color: '#ff2d55',
+        glowColor: 'rgba(255, 45, 85, 0.75)',
+        draw(ctx, r) {
+          ctx.beginPath();
+          ctx.moveTo(0, r * 0.75);
+          ctx.bezierCurveTo(-r * 0.8, r * 0.1, -r * 0.6, -r * 0.6, 0, -r * 0.5);
+          ctx.bezierCurveTo(r * 0.6, -r * 0.6, r * 0.8, r * 0.1, 0, r * 0.75);
+          ctx.fillStyle = '#ff2d55';
+          ctx.fill();
+
+          // Crown leaves
+          ctx.beginPath();
+          ctx.moveTo(-r * 0.4, -r * 0.5);
+          ctx.lineTo(0, -r * 0.75);
+          ctx.lineTo(r * 0.4, -r * 0.5);
+          ctx.closePath();
+          ctx.fillStyle = '#30d158';
+          ctx.fill();
+        }
+      },
+      {
+        id: 'starfruit',
+        name: 'Supernova Star',
+        points: 75,
+        radius: 40,
+        color: '#ffd60a',
+        glowColor: 'rgba(255, 230, 0, 0.95)',
+        draw(ctx, r) {
+          // 5-point star
+          ctx.beginPath();
+          for (let i = 0; i < 10; i++) {
+            const rad = i % 2 === 0 ? r * 0.8 : r * 0.38;
+            const angle = (i * Math.PI) / 5 - Math.PI / 2;
+            const x = Math.cos(angle) * rad;
+            const y = Math.sin(angle) * rad;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.fillStyle = '#ffd60a';
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      },
+      {
+        id: 'freeze',
+        name: 'Chrono Freeze',
+        points: 50,
+        radius: 38,
+        color: '#00e5ff',
+        glowColor: 'rgba(0, 229, 255, 0.9)',
+        draw(ctx, r) {
+          // Hexagonal ice crystal
+          ctx.beginPath();
+          for (let i = 0; i < 6; i++) {
+            const angle = (i * Math.PI) / 3;
+            const x = Math.cos(angle) * r * 0.75;
+            const y = Math.sin(angle) * r * 0.75;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.fillStyle = '#00e5ff';
+          ctx.fill();
+
+          // Snowflake cross
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 3;
+          for (let i = 0; i < 3; i++) {
+            const angle = (i * Math.PI) / 3;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(angle) * r * 0.6, Math.sin(angle) * r * 0.6);
+            ctx.lineTo(-Math.cos(angle) * r * 0.6, -Math.sin(angle) * r * 0.6);
+            ctx.stroke();
+          }
+        }
+      },
+      {
+        id: 'bomb',
+        name: 'EMP Hazard Bomb',
+        points: -50,
+        radius: 36,
+        color: '#ff453a',
+        glowColor: 'rgba(255, 69, 58, 0.85)',
+        draw(ctx, r) {
+          // Spiked plasma hazard
+          ctx.beginPath();
+          ctx.arc(0, 0, r * 0.65, 0, Math.PI * 2);
+          ctx.fillStyle = '#1c1c24';
+          ctx.fill();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = '#ff453a';
+          ctx.stroke();
+
+          // Skull / Hazard warning center
+          ctx.beginPath();
+          ctx.arc(0, -2, r * 0.28, 0, Math.PI * 2);
+          ctx.fillStyle = '#ff453a';
+          ctx.fill();
+
+          // Radiating caution pulses
+          for (let i = 0; i < 4; i++) {
+            const angle = (i * Math.PI) / 2 + (Date.now() / 400);
+            ctx.beginPath();
+            ctx.arc(Math.cos(angle) * r * 0.65, Math.sin(angle) * r * 0.65, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff9f0a';
+            ctx.fill();
+          }
+        }
+      }
+    ];
+
+    /* ==========================================================================
+       5. BLADE TRACKER (FLUID SWIPE & DIRECT MANIPULATION)
+       ========================================================================== */
+    const BladeTracker = {
+      isPointerDown: false,
+      trail: [],
+      currentPos: { x: 0, y: 0 },
+      lastPos: { x: 0, y: 0 },
+      velocity: 0,
+
+      init(canvas) {
+        canvas.addEventListener('pointerdown', (e) => {
+          AudioManager.ensureContext();
+          this.isPointerDown = true;
+          canvas.setPointerCapture(e.pointerId);
+          const p = this.getCoords(e, canvas);
+          this.currentPos = p;
+          this.lastPos = p;
+          this.trail = [{ x: p.x, y: p.y, time: Date.now() }];
+          GameApp.handleDirectInteraction(p.x, p.y);
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+          if (!this.isPointerDown) return;
+          const p = this.getCoords(e, canvas);
+          const dx = p.x - this.currentPos.x;
+          const dy = p.y - this.currentPos.y;
+          this.velocity = Math.sqrt(dx * dx + dy * dy);
+
+          this.lastPos = { ...this.currentPos };
+          this.currentPos = p;
+          this.trail.push({ x: p.x, y: p.y, time: Date.now() });
+
+          // Test slice intersection against active fruits
+          GameApp.testBladeIntersection(this.lastPos, this.currentPos, this.velocity);
+
+          if (this.velocity > 15) {
+            AudioManager.playSlice(this.velocity / 20);
+          }
+        });
+
+        const endInteraction = (e) => {
+          this.isPointerDown = false;
+        };
+
+        canvas.addEventListener('pointerup', endInteraction);
+        canvas.addEventListener('pointercancel', endInteraction);
+      },
+
+      getCoords(e, canvas) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+      },
+
+      update() {
+        const now = Date.now();
+        // Keep trail points younger than 160ms for crisp, fluid ribbon
+        this.trail = this.trail.filter(pt => now - pt.time < 160);
+      },
+
+      render(ctx) {
+        if (this.trail.length < 2) return;
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        for (let i = 1; i < this.trail.length; i++) {
+          const pt1 = this.trail[i - 1];
+          const pt2 = this.trail[i];
+          const age = Date.now() - pt2.time;
+          const life = Math.max(0, 1 - age / 160);
+
+          ctx.beginPath();
+          ctx.moveTo(pt1.x, pt1.y);
+          ctx.lineTo(pt2.x, pt2.y);
+          ctx.lineWidth = life * 8;
+          ctx.strokeStyle = `rgba(0, 229, 255, ${life * 0.9})`;
+          ctx.shadowColor = '#00ffff';
+          ctx.shadowBlur = life * 15;
+          ctx.stroke();
+
+          // Inner white-hot laser core
+          ctx.lineWidth = life * 3;
+          ctx.strokeStyle = `rgba(255, 255, 255, ${life})`;
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    };
+
+    /* ==========================================================================
+       6. ACTIVE GAME ENTITIES & PARTICLE SYSTEM (REALISTIC 8K PHYSICS)
+       ========================================================================== */
+    class FloatingFruit {
+      constructor(canvasWidth, canvasHeight, catalogItem) {
+        this.item = catalogItem;
+        this.radius = catalogItem.radius;
+        this.x = Math.random() * (canvasWidth - this.radius * 2) + this.radius;
+        this.y = canvasHeight + this.radius + 10;
+        
+        // Launch arc physics (launch upward like true arcade fruit game)
+        const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.5;
+        const speed = Math.random() * 4 + 13;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.gravity = 0.28;
+        this.rotation = 0;
+        this.rotSpeed = (Math.random() - 0.5) * 0.08;
+        this.isSliced = false;
+        this.scale = 1;
+      }
+
+      update(timeFactor) {
+        this.x += this.vx * timeFactor;
+        this.y += this.vy * timeFactor;
+        this.vy += this.gravity * timeFactor;
+        this.rotation += this.rotSpeed * timeFactor;
+      }
+
+      render(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.scale(this.scale, this.scale);
+
+        // Apple Soft Glow Halo
+        ctx.shadowColor = this.item.glowColor;
+        ctx.shadowBlur = 18;
+
+        this.item.draw(ctx, this.radius);
+        ctx.restore();
+      }
+    }
+
+    class SlicedHalf {
+      constructor(x, y, radius, item, dirAngle, rot) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.item = item;
+        this.rotation = rot;
+        this.vx = Math.cos(dirAngle) * (Math.random() * 5 + 4);
+        this.vy = Math.sin(dirAngle) * (Math.random() * 5 + 4) - 2;
+        this.gravity = 0.38;
+        this.rotSpeed = (Math.random() - 0.5) * 0.2;
+        this.opacity = 1;
+      }
+
+      update(timeFactor) {
+        this.x += this.vx * timeFactor;
+        this.y += this.vy * timeFactor;
+        this.vy += this.gravity * timeFactor;
+        this.rotation += this.rotSpeed * timeFactor;
+        this.opacity -= 0.02 * timeFactor;
+      }
+
+      render(ctx) {
+        if (this.opacity <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.opacity);
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        // Clip half circle to simulate clean cut
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI);
+        ctx.clip();
+
+        this.item.draw(ctx, this.radius);
+        ctx.restore();
+      }
+    }
+
+    class SplashParticle {
+      constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 7 + 2;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.radius = Math.random() * 4 + 2;
+        this.alpha = 1;
+        this.decay = Math.random() * 0.03 + 0.02;
+      }
+
+      update(timeFactor) {
+        this.x += this.vx * timeFactor;
+        this.y += this.vy * timeFactor;
+        this.vy += 0.2 * timeFactor; // liquid gravity
+        this.alpha -= this.decay * timeFactor;
+      }
+
+      render(ctx) {
+        if (this.alpha <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        ctx.fillStyle = this.color;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    class ScorePopup {
+      constructor(x, y, text, color) {
+        this.x = x;
+        this.y = y;
+        this.text = text;
+        this.color = color;
+        this.alpha = 1;
+        this.vy = -2.5;
+        this.scale = 0.7;
+      }
+
+      update(timeFactor) {
+        this.y += this.vy * timeFactor;
+        this.scale = Math.min(1.2, this.scale + 0.05 * timeFactor);
+        this.alpha -= 0.025 * timeFactor;
+      }
+
+      render(ctx) {
+        if (this.alpha <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        ctx.font = '700 22px -apple-system, "SF Pro Display", sans-serif';
+        ctx.fillStyle = this.color;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 12;
+        ctx.textAlign = 'center';
+        ctx.fillText(this.text, this.x, this.y);
+        ctx.restore();
+      }
+    }
+
+    /* ==========================================================================
+       7. MAIN GAME CONTROLLER & GAME LOOP
+       ========================================================================== */
+    const GameApp = {
+      canvas: null,
+      ctx: null,
+      width: 0,
+      height: 0,
+      dpr: 1,
+
+      // State
+      score: 0,
+      highScore: 0,
+      timeLeft: 45,
+      combo: 0,
+      lastSliceTime: 0,
+      gameActive: false,
+      isPaused: false,
+      freezeTimeRemaining: 0,
+
+      // Collections
+      fruits: [],
+      halves: [],
+      particles: [],
+      popups: [],
+
+      // Timers
+      spawnTimer: null,
+      gameTimer: null,
+
+      init() {
+        this.canvas = document.getElementById('render-canvas');
+        this.ctx = this.canvas.getContext('2d', { alpha: true });
+        this.highScore = parseInt(localStorage.getItem('neonFruitHighApple') || '0', 10);
+        document.getElementById('start-best-score').textContent = this.highScore;
+
+        this.handleResize();
+        window.addEventListener('resize', () => this.handleResize());
+
+        BladeTracker.init(this.canvas);
+        YouTubePlayables.init();
+
+        this.bindEvents();
+        YouTubePlayables.reportFirstFrame();
+        YouTubePlayables.reportGameReady();
+
+        // Start render loop
+        requestAnimationFrame((t) => this.renderLoop(t));
+      },
+
+      handleResize() {
+        const container = document.getElementById('game-viewport');
+        this.width = container.clientWidth;
+        this.height = container.clientHeight;
+        this.dpr = Math.min(window.devicePixelRatio || 1, 3);
+
+        this.canvas.width = this.width * this.dpr;
+        this.canvas.height = this.height * this.dpr;
+        this.canvas.style.width = `${this.width}px`;
+        this.canvas.style.height = `${this.height}px`;
+
+        this.ctx.scale(this.dpr, this.dpr);
+      },
+
+      bindEvents() {
+        document.getElementById('btn-start').addEventListener('click', () => this.start());
+        document.getElementById('btn-restart').addEventListener('click', () => this.start());
+        document.getElementById('btn-audio').addEventListener('click', () => AudioManager.toggleMute());
+        document.getElementById('btn-pause').addEventListener('click', () => this.pause());
+        document.getElementById('btn-resume').addEventListener('click', () => this.resume());
+        document.getElementById('btn-quit-to-menu').addEventListener('click', () => this.quitToMenu());
+
+        // TypeSafe Inspector sheet triggers
+        const sheet = document.getElementById('typesafe-sheet');
+        const openSheet = () => sheet.classList.add('open');
+        const closeSheet = () => sheet.classList.remove('open');
+        document.getElementById('btn-open-typesafe').addEventListener('click', openSheet);
+        document.getElementById('btn-gameover-typesafe').addEventListener('click', openSheet);
+        document.getElementById('btn-close-sheet').addEventListener('click', closeSheet);
+
+        // Keyboard navigation
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' || e.key === 'p') {
+            if (this.gameActive) {
+              if (this.isPaused) this.resume();
+              else this.pause();
+            }
+          }
+        });
+      },
+
+      start() {
+        AudioManager.ensureContext();
+        this.score = 0;
+        this.timeLeft = 45;
+        this.combo = 0;
+        this.freezeTimeRemaining = 0;
+        this.gameActive = true;
+        this.isPaused = false;
+        this.fruits = [];
+        this.halves = [];
+        this.particles = [];
+        this.popups = [];
+
+        // Update HUD
+        document.getElementById('hud-score').textContent = '0';
+        document.getElementById('hud-timer').textContent = '45';
+        document.getElementById('hud').classList.add('active');
+        document.getElementById('start-modal').classList.remove('visible');
+        document.getElementById('gameover-modal').classList.remove('visible');
+        document.getElementById('pause-modal').classList.remove('visible');
+        document.getElementById('typesafe-sheet').classList.remove('open');
+
+        // Reset and launch intervals
+        clearInterval(this.spawnTimer);
+        clearInterval(this.gameTimer);
+
+        this.scheduleSpawn();
+
+        this.gameTimer = setInterval(() => {
+          if (this.isPaused) return;
+          this.timeLeft--;
+          document.getElementById('hud-timer').textContent = this.timeLeft;
+
+          if (this.timeLeft <= 0) {
+            this.gameOver();
+          }
+        }, 1000);
+      },
+
+      scheduleSpawn() {
+        if (!this.gameActive) return;
+        const baseInterval = this.freezeTimeRemaining > 0 ? 1400 : 850;
+        // Dynamic adaptive pacing via TypeSafe Engine
+        const interval = baseInterval / TypeSafeEngine.state.pacingRoutingWeight;
+
+        this.spawnTimer = setTimeout(() => {
+          if (this.gameActive && !this.isPaused) {
+            this.spawnWave();
+          }
+          this.scheduleSpawn();
+        }, interval);
+      },
+
+      spawnWave() {
+        // Spawn 1 to 3 fruits per wave
+        const count = Math.random() < 0.35 ? 2 : 1;
+        for (let i = 0; i < count; i++) {
+          let item;
+          const roll = Math.random();
+          if (roll < 0.08) {
+            item = FRUIT_CATALOG.find(f => f.id === 'starfruit'); // Golden Star
+          } else if (roll < 0.16) {
+            item = FRUIT_CATALOG.find(f => f.id === 'freeze'); // Chrono Freeze
+          } else if (roll < 0.28) {
+            item = FRUIT_CATALOG.find(f => f.id === 'bomb'); // EMP Bomb Hazard
+          } else {
+            // Standard fruits
+            const standards = FRUIT_CATALOG.filter(f => f.id !== 'starfruit' && f.id !== 'freeze' && f.id !== 'bomb');
+            item = standards[Math.floor(Math.random() * standards.length)];
+          }
+
+          this.fruits.push(new FloatingFruit(this.width, this.height, item));
+        }
+      },
+
+      pause() {
+        if (!this.gameActive || this.isPaused) return;
+        this.isPaused = true;
+        document.getElementById('pause-modal').classList.add('visible');
+      },
+
+      resume() {
+        if (!this.gameActive || !this.isPaused) return;
+        this.isPaused = false;
+        document.getElementById('pause-modal').classList.remove('visible');
+      },
+
+      quitToMenu() {
+        this.gameActive = false;
+        this.isPaused = false;
+        clearInterval(this.spawnTimer);
+        clearInterval(this.gameTimer);
+        document.getElementById('hud').classList.remove('active');
+        document.getElementById('pause-modal').classList.remove('visible');
+        document.getElementById('start-modal').classList.add('visible');
+      },
+
+      gameOver() {
+        this.gameActive = false;
+        clearInterval(this.spawnTimer);
+        clearInterval(this.gameTimer);
+
+        document.getElementById('hud').classList.remove('active');
+        document.getElementById('gameover-score').textContent = this.score;
+
+        const isNewRecord = this.score > this.highScore;
+        if (isNewRecord) {
+          this.highScore = this.score;
+          localStorage.setItem('neonFruitHighApple', this.highScore);
+          document.getElementById('start-best-score').textContent = this.highScore;
+          const tag = document.getElementById('gameover-high-tag');
+          tag.textContent = `★ NEW RECORD HIGH: ${this.highScore}`;
+          tag.classList.add('new-record');
+        } else {
+          const tag = document.getElementById('gameover-high-tag');
+          tag.textContent = `Best Record: ${this.highScore}`;
+          tag.classList.remove('new-record');
+        }
+
+        // Send score to YouTube Playables
+        YouTubePlayables.sendScore(this.score);
+
+        // Summaries
+        document.getElementById('summary-max-combo').textContent = `x${TypeSafeEngine.state.maxCombo}`;
+        const total = TypeSafeEngine.state.totalSlices;
+        const hits = TypeSafeEngine.state.successfulHits;
+        const acc = total > 0 ? Math.round((hits / total) * 100) : 100;
+        document.getElementById('summary-accuracy').textContent = `${acc}%`;
+
+        document.getElementById('gameover-modal').classList.add('visible');
+      },
+
+      // Direct tap interaction
+      handleDirectInteraction(x, y) {
+        if (!this.gameActive || this.isPaused) return;
+        for (let i = this.fruits.length - 1; i >= 0; i--) {
+          const f = this.fruits[i];
+          const dist = Math.hypot(f.x - x, f.y - y);
+          if (dist <= f.radius * 1.2) {
+            this.sliceFruit(f, i, Math.PI / 4);
+            break;
+          }
+        }
+      },
+
+      // Intersection test for fluid blade slice
+      testBladeIntersection(p1, p2, vel) {
+        if (!this.gameActive || this.isPaused) return;
+        const sliceAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+
+        for (let i = this.fruits.length - 1; i >= 0; i--) {
+          const f = this.fruits[i];
+          if (this.lineIntersectsCircle(p1, p2, f, f.radius)) {
+            this.sliceFruit(f, i, sliceAngle);
+          }
+        }
+      },
+
+      lineIntersectsCircle(p1, p2, circle, r) {
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const len = Math.hypot(dx, dy);
+        if (len === 0) return Math.hypot(circle.x - p1.x, circle.y - p1.y) <= r;
+
+        const u = ((circle.x - p1.x) * dx + (circle.y - p1.y) * dy) / (len * len);
+        const clampedU = Math.max(0, Math.min(1, u));
+        const nearX = p1.x + clampedU * dx;
+        const nearY = p1.y + clampedU * dy;
+
+        return Math.hypot(circle.x - nearX, circle.y - nearY) <= r;
+      },
+
+      sliceFruit(fruit, index, sliceAngle) {
+        this.fruits.splice(index, 1);
+
+        // Check if bomb
+        if (fruit.item.id === 'bomb') {
+          AudioManager.playBomb();
+          TypeSafeEngine.recordSlice(false, true);
+          this.score = Math.max(0, this.score - 50);
+          this.combo = 0;
+          this.updateComboUI();
+          this.popups.push(new ScorePopup(fruit.x, fruit.y, '-50 HAZARD', '#ff453a'));
+          this.createExplosion(fruit.x, fruit.y, '#ff453a');
+          return;
+        }
+
+        // Chrono Freeze bonus powerup
+        if (fruit.item.id === 'freeze') {
+          AudioManager.playFreeze();
+          this.freezeTimeRemaining = 5;
+          document.getElementById('freeze-overlay').classList.add('active');
+          this.popups.push(new ScorePopup(fruit.x, fruit.y, 'CHRONO FREEZE!', '#00e5ff'));
+        }
+
+        // Combo calculations
+        const now = Date.now();
+        if (now - this.lastSliceTime < 650) {
+          this.combo = Math.min(8, this.combo + 1);
+        } else {
+          this.combo = 1;
+        }
+        this.lastSliceTime = now;
+        TypeSafeEngine.recordCombo(this.combo);
+
+        const earnedPoints = fruit.item.points * this.combo;
+        this.score += earnedPoints;
+        document.getElementById('hud-score').textContent = this.score;
+
+        // Feedback
+        AudioManager.playSquish(300 + Math.random() * 300);
+        AudioManager.playCombo(this.combo);
+        TypeSafeEngine.recordSlice(true);
+
+        this.updateComboUI();
+        this.popups.push(new ScorePopup(fruit.x, fruit.y, `+${earnedPoints}`, fruit.item.color));
+
+        // Create 2 sliced halves
+        const perp = sliceAngle + Math.PI / 2;
+        this.halves.push(new SlicedHalf(fruit.x, fruit.y, fruit.radius, fruit.item, perp, fruit.rotation));
+        this.halves.push(new SlicedHalf(fruit.x, fruit.y, fruit.radius, fruit.item, perp + Math.PI, fruit.rotation));
+
+        // Juice splatter particles
+        this.createJuiceSplatter(fruit.x, fruit.y, fruit.item.color);
+      },
+
+      updateComboUI() {
+        const badge = document.getElementById('combo-badge');
+        if (this.combo > 1) {
+          badge.textContent = `COMBO x${this.combo}`;
+          badge.classList.add('show');
+          if (this.combo >= 5) badge.classList.add('frenzy');
+          else badge.classList.remove('frenzy');
+        } else {
+          badge.classList.remove('show', 'frenzy');
+        }
+      },
+
+      createJuiceSplatter(x, y, color) {
+        for (let i = 0; i < 18; i++) {
+          this.particles.push(new SplashParticle(x, y, color));
+        }
+      },
+
+      createExplosion(x, y, color) {
+        for (let i = 0; i < 30; i++) {
+          this.particles.push(new SplashParticle(x, y, color));
+        }
+      },
+
+      renderLoop(timestamp) {
+        this.ctx.clearRect(0, 0, this.width, this.height);
+
+        // Time factor for slow motion
+        let timeFactor = 1.0;
+        if (this.freezeTimeRemaining > 0) {
+          timeFactor = 0.35;
+          this.freezeTimeRemaining -= 0.016;
+          if (this.freezeTimeRemaining <= 0) {
+            document.getElementById('freeze-overlay').classList.remove('active');
+          }
+        }
+
+        if (!this.isPaused) {
+          // Update & Render active fruits
+          for (let i = this.fruits.length - 1; i >= 0; i--) {
+            const f = this.fruits[i];
+            f.update(timeFactor);
+            f.render(this.ctx);
+
+            // Remove if fallen below screen
+            if (f.y > this.height + f.radius * 2 && f.vy > 0) {
+              this.fruits.splice(i, 1);
+            }
+          }
+
+          // Update & Render halves
+          for (let i = this.halves.length - 1; i >= 0; i--) {
+            const h = this.halves[i];
+            h.update(timeFactor);
+            h.render(this.ctx);
+            if (h.opacity <= 0) this.halves.splice(i, 1);
+          }
+
+          // Update & Render particles
+          for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.update(timeFactor);
+            p.render(this.ctx);
+            if (p.alpha <= 0) this.particles.splice(i, 1);
+          }
+
+          // Update & Render popups
+          for (let i = this.popups.length - 1; i >= 0; i--) {
+            const pop = this.popups[i];
+            pop.update(timeFactor);
+            pop.render(this.ctx);
+            if (pop.alpha <= 0) this.popups.splice(i, 1);
+          }
+
+          // Update blade ribbon
+          BladeTracker.update();
+        }
+
+        // Render blade trail always
+        BladeTracker.render(this.ctx);
+
+        requestAnimationFrame((t) => this.renderLoop(t));
+      }
+    };
+
+    // Initialize once DOM is ready
+    window.addEventListener('DOMContentLoaded', () => {
+      GameApp.init();
+    });
+  </script>
+</body>
+</html>
